@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pengingat Shalat</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    color: white;
+
+    /* Background gambar lebih transparan */
+    background:
+        linear-gradient(
+            rgba(10, 20, 40, 0.25),
+            rgba(10, 20, 40, 0.40)
+        ),
+        url("https://images.unsplash.com/photo-1519681393784-d120267933ba")
+        center / cover fixed;
+}
+
+.container {
+    width: 100%;
+    max-width: 390px;
+    padding: 24px 20px;
+
+    /* Kartu transparan */
+    background: rgba(20, 34, 56, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    text-align: center;
+    font-size: 25px;
+    margin: 5px 0 8px;
+}
+
+.subtitle, .date {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.clock {
+    text-align: center;
+    font-size: 44px;
+    font-weight: bold;
+    margin-top: 22px;
+}
+
+.date {
+    margin: 8px 0 22px;
+}
+
+.location-box {
+    margin-bottom: 22px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.location-input {
+    display: flex;
+    gap: 7px;
+}
+
+input, button {
+    border: 0;
+    border-radius: 9px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+input {
+    min-width: 0;
+    width: 100%;
+    color: #17263b;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+button {
+    cursor: pointer;
+    background: #d9b978;
+    color: #142238;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.status {
+    font-size: 12px;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+.countdown {
+    text-align: center;
+    padding: 18px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 14px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.countdown h3 {
+    font-size: 15px;
+    margin: 0 0 10px;
+}
+
+.timer {
+    font-size: 29px;
+    font-weight: bold;
+}
+
+.schedule-title {
+    font-size: 21px;
+    margin-bottom: 5px;
+}
+
+.city-label {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 14px;
+}
+
+.prayer {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 10px;
+    margin: 7px 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.prayer.active {
+    background: rgba(217, 185, 120, 0.25);
+    border-color: #d9b978;
+}
+
+.footer {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 24px;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+@media (max-width: 420px) {
+    .container {
+        padding: 20px 16px;
+    }
+
+    .clock {
+        font-size: 38px;
+    }
+
+    .timer {
+        font-size: 27px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>🕌 Pengingat Shalat</h1>
+    <div class="subtitle">Jadwal Shalat Harian</div>
+
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date" id="date">Memuat tanggal...</div>
+
+    <div class="location-box">
+        <label for="city">📍 Pilih Kota / Daerah</label>
+
+        <div class="location-input">
+            <input id="city"
+                   value="Serang"
+                   list="cityList"
+                   placeholder="Contoh: Bandung">
+
+            <datalist id="cityList">
+                <option value="Serang">
+                <option value="Jakarta">
+                <option value="Tangerang Selatan">
+                <option value="Bandung">
+                <option value="Semarang">
+                <option value="Yogyakarta">
+                <option value="Surabaya">
+                <option value="Medan">
+                <option value="Padang">
+                <option value="Palembang">
+                <option value="Pontianak">
+                <option value="Makassar">
+                <option value="Denpasar">
+                <option value="Balikpapan">
+                <option value="Manado">
+                <option value="Ambon">
+                <option value="Jayapura">
+            </datalist>
+
+            <button id="searchBtn" onclick="loadSchedule()">
+                Cari
+            </button>
+        </div>
+
+        <div class="status" id="status">
+            Memuat jadwal shalat...
+        </div>
+    </div>
+
+    <div class="countdown">
+        <h3 id="nextPrayer">Shalat berikutnya</h3>
+        <div class="timer" id="timer">--:--:--</div>
+        <div class="subtitle">Jam : Menit : Detik</div>
+    </div>
+
+    <h2 class="schedule-title">🕌 Jadwal Shalat</h2>
+    <div class="city-label" id="cityLabel">Lokasi: Serang</div>
+
+    <div id="prayerList">
+        <div class="prayer">Memuat jadwal...</div>
+    </div>
+
+    <div class="footer">
+        Semoga setiap langkah kita<br>
+        dalam kebaikan
+    </div>
+</div>
+
+<script>
+let prayers = [];
+let selectedCity = "Serang";
+let selectedZone = "Asia/Jakarta";
+let loading = false;
+
+function getTimeZone(city) {
+    const zones = {
+        "banda aceh": "Asia/Jakarta",
+        "medan": "Asia/Jakarta",
+        "padang": "Asia/Jakarta",
+        "pekanbaru": "Asia/Jakarta",
+        "jambi": "Asia/Jakarta",
+        "palembang": "Asia/Jakarta",
+        "bengkulu": "Asia/Jakarta",
+        "bandar lampung": "Asia/Jakarta",
+        "jakarta": "Asia/Jakarta",
+        "serang": "Asia/Jakarta",
+        "tangerang": "Asia/Jakarta",
+        "tangerang selatan": "Asia/Jakarta",
+        "bekasi": "Asia/Jakarta",
+        "bogor": "Asia/Jakarta",
+        "depok": "Asia/Jakarta",
+        "bandung": "Asia/Jakarta",
+        "semarang": "Asia/Jakarta",
+        "yogyakarta": "Asia/Jakarta",
+        "surabaya": "Asia/Jakarta",
+        "malang": "Asia/Jakarta",
+        "pontianak": "Asia/Pontianak",
+        "palangkaraya": "Asia/Pontianak",
+        "banjarmasin": "Asia/Makassar",
+        "balikpapan": "Asia/Makassar",
+        "samarinda": "Asia/Makassar",
+        "makassar": "Asia/Makassar",
+        "palu": "Asia/Makassar",
+        "manado": "Asia/Makassar",
+        "kendari": "Asia/Makassar",
+        "gorontalo": "Asia/Makassar",
+        "denpasar": "Asia/Makassar",
+        "mataram": "Asia/Makassar",
+        "kupang": "Asia/Makassar",
+        "ambon": "Asia/Jayapura",
+        "ternate": "Asia/Jayapura",
+        "jayapura": "Asia/Jayapura",
+        "merauke": "Asia/Jayapura",
+        "sorong": "Asia/Jayapura",
+        "manokwari": "Asia/Jayapura"
+    };
+
+    return zones[city.trim().toLowerCase()] || null;
+}
+
+function getLocalParts(date, zone) {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: zone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+    }).formatToParts(date);
+
+    const result = {};
+
+    parts.forEach(part => {
+        if (part.type !== "literal") {
+            result[part.type] = Number(part.value);
+        }
+    });
+
+    return result;
+}
+
+function updateClock() {
+    const now = new Date();
+
+    document.getElementById("clock").textContent =
+        new Intl.DateTimeFormat("id-ID", {
+            timeZone: selectedZone,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hourCycle: "h23"
+        }).format(now);
+
+    document.getElementById("date").textContent =
+        new Intl.DateTimeFormat("id-ID", {
+            timeZone: selectedZone,
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }).format(now);
+
+    if (!prayers.length) return;
+
+    const local = getLocalParts(now, selectedZone);
+    const currentSeconds =
+        local.hour * 3600 +
+        local.minute * 60 +
+        local.second;
+
+    let next = null;
+
+    for (const prayer of prayers) {
+        const [h, m] = prayer.time.split(":").map(Number);
+        const prayerSeconds = h * 3600 + m * 60;
+
+        if (prayerSeconds > currentSeconds) {
+            next = {
+                ...prayer,
+                remaining: prayerSeconds - currentSeconds
+            };
+            break;
+        }
+    }
+
+    if (!next) {
+        const first = prayers[0];
+        const [h, m] = first.time.split(":").map(Number);
+
+        next = {
+            ...first,
+            remaining:
+                86400 - currentSeconds + h * 3600 + m * 60
+        };
+    }
+
+    document.getElementById("nextPrayer").textContent =
+        "Shalat berikutnya: " + next.name;
+
+    const seconds = Math.max(0, next.remaining);
+    const hh = Math.floor(seconds / 3600);
+    const mm = Math.floor((seconds % 3600) / 60);
+    const ss = seconds % 60;
+
+    document.getElementById("timer").textContent =
+        [hh, mm, ss]
+        .map(n => String(n).padStart(2, "0"))
+        .join(":");
+
+    document.querySelectorAll(".prayer").forEach((element, i) => {
+        element.classList.toggle(
+            "active",
+            prayers[i]?.name === next.name
+        );
+    });
+}
+
+function getLocalApiDate(zone) {
+    const parts = getLocalParts(new Date(), zone);
+
+    return [
+        String(parts.day).padStart(2, "0"),
+        String(parts.month).padStart(2, "0"),
+        parts.year
+    ].join("-");
+}
+
+function getZoneLabel(zone) {
+    if (zone === "Asia/Jakarta" ||
+        zone === "Asia/Pontianak") return "WIB";
+
+    if (zone === "Asia/Makassar") return "WITA";
+    if (zone === "Asia/Jayapura") return "WIT";
+
+    return zone;
+}
+
+async function loadSchedule() {
+    if (loading) return;
+
+    const city = document.getElementById("city").value.trim();
+
+    if (!city) {
+        document.getElementById("status").textContent =
+            "Masukkan nama kota terlebih dahulu.";
+        return;
+    }
+
+    const zone = getTimeZone(city);
+
+    if (!zone) {
+        document.getElementById("status").textContent =
+            "Zona waktu kota belum terdaftar. Silakan tambahkan kota pada fungsi getTimeZone().";
+        return;
+    }
+
+    loading = true;
+
+    const button = document.getElementById("searchBtn");
+    button.disabled = true;
+    button.textContent = "Memuat...";
+
+    document.getElementById("status").textContent =
+        "Mengambil jadwal shalat untuk " + city + "...";
+
+    try {
+        const date = getLocalApiDate(zone);
+
+        const url =
+            "https://api.aladhan.com/v1/timingsByCity/" +
+            date +
+            "?city=" + encodeURIComponent(city) +
+            "&country=Indonesia&method=20";
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error("Koneksi API gagal");
+        }
+
+        const result = await response.json();
+
+        if (result.code !== 200 || !result.data?.timings) {
+            throw new Error("Jadwal tidak ditemukan");
+        }
+
+        const data = result.data.timings;
+
+        const newPrayers = [
+            { key: "Fajr", name: "Subuh", icon: "🌅" },
+            { key: "Dhuhr", name: "Zuhur", icon: "☀️" },
+            { key: "Asr", name: "Asar", icon: "🌤️" },
+            { key: "Maghrib", name: "Magrib", icon: "🌇" },
+            { key: "Isha", name: "Isya", icon: "🌙" }
+        ].map(p => ({
+            name: p.name,
+            icon: p.icon,
+            time: data[p.key].split(" ")[0]
+        }));
+
+        prayers = newPrayers;
+        selectedCity = city;
+        selectedZone = zone;
+
+        document.getElementById("cityLabel").textContent =
+            "Lokasi: " + city + ", Indonesia (" +
+            getZoneLabel(zone) + ")";
+
+        document.getElementById("prayerList").innerHTML =
+            prayers.map(p => `
+                <div class="prayer">
+                    <span>${p.icon} ${p.name}</span>
+                    <span>${p.time}</span>
+                </div>
+            `).join("");
+
+        document.getElementById("status").textContent =
+            "Jadwal berhasil diperbarui untuk " + city + ".";
+
+        updateClock();
+
+    } catch (error) {
+        document.getElementById("status").textContent =
+            "Gagal mengambil jadwal. Periksa nama kota dan koneksi internet.";
+    } finally {
+        loading = false;
+        button.disabled = false;
+        button.textContent = "Cari";
+    }
+}
+
+document.getElementById("city").addEventListener("keydown", event => {
+    if (event.key === "Enter") loadSchedule();
+});
+
+updateClock();
+loadSchedule();
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
